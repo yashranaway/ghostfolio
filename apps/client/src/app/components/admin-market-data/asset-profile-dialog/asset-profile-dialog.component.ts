@@ -18,6 +18,7 @@ import {
   ScraperConfiguration,
   User
 } from '@ghostfolio/common/interfaces';
+import { DateRange } from '@ghostfolio/common/types';
 import { GfCurrencySelectorComponent } from '@ghostfolio/ui/currency-selector';
 import { GfEntityLogoComponent } from '@ghostfolio/ui/entity-logo';
 import { GfHistoricalMarketDataEditorComponent } from '@ghostfolio/ui/historical-market-data-editor';
@@ -65,6 +66,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatTabsModule } from '@angular/material/tabs';
 import { IonIcon } from '@ionic/angular/standalone';
 import {
   AssetClass,
@@ -77,7 +79,12 @@ import { isUUID } from 'class-validator';
 import { format } from 'date-fns';
 import { StatusCodes } from 'http-status-codes';
 import { addIcons } from 'ionicons';
-import { createOutline, ellipsisVertical } from 'ionicons/icons';
+import {
+  createOutline,
+  ellipsisVertical,
+  readerOutline,
+  serverOutline
+} from 'ionicons/icons';
 import ms from 'ms';
 import { EMPTY, Subject } from 'rxjs';
 import { catchError, takeUntil } from 'rxjs/operators';
@@ -106,6 +113,7 @@ import { AssetProfileDialogParams } from './interfaces/interfaces';
     MatMenuModule,
     MatSelectModule,
     MatSnackBarModule,
+    MatTabsModule,
     ReactiveFormsModule,
     TextFieldModule
   ],
@@ -183,6 +191,32 @@ export class GfAssetProfileDialogComponent implements OnDestroy, OnInit {
   };
 
   public currencies: string[] = [];
+  public dateRangeOptions = [
+    {
+      label: $localize`Current week` + ' (' + $localize`WTD` + ')',
+      value: 'wtd'
+    },
+    {
+      label: $localize`Current month` + ' (' + $localize`MTD` + ')',
+      value: 'mtd'
+    },
+    {
+      label: $localize`Current year` + ' (' + $localize`YTD` + ')',
+      value: 'ytd'
+    },
+    {
+      label: '1 ' + $localize`year` + ' (' + $localize`1Y` + ')',
+      value: '1y'
+    },
+    {
+      label: '5 ' + $localize`years` + ' (' + $localize`5Y` + ')',
+      value: '5y'
+    },
+    {
+      label: $localize`Max`,
+      value: 'max'
+    }
+  ];
   public historicalDataItems: LineChartItem[];
   public isBenchmark = false;
   public isDataGatheringEnabled: boolean;
@@ -223,7 +257,7 @@ export class GfAssetProfileDialogComponent implements OnDestroy, OnInit {
     private snackBar: MatSnackBar,
     private userService: UserService
   ) {
-    addIcons({ createOutline, ellipsisVertical });
+    addIcons({ createOutline, ellipsisVertical, readerOutline, serverOutline });
   }
 
   public get canEditAssetProfileIdentifier() {
@@ -398,9 +432,15 @@ export class GfAssetProfileDialogComponent implements OnDestroy, OnInit {
       .subscribe();
   }
 
-  public onGatherSymbol({ dataSource, symbol }: AssetProfileIdentifier) {
+  public onGatherSymbol({
+    dataSource,
+    range,
+    symbol
+  }: {
+    range?: DateRange;
+  } & AssetProfileIdentifier) {
     this.adminService
-      .gatherSymbol({ dataSource, symbol })
+      .gatherSymbol({ dataSource, range, symbol })
       .pipe(takeUntil(this.unsubscribeSubject))
       .subscribe();
   }
